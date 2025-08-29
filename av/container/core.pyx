@@ -1,5 +1,6 @@
 from fractions import Fraction
 
+from Cython.Compiler.ExprNodes import NullNode
 from cython.operator cimport dereference
 from libc.stdint cimport int64_t
 
@@ -16,11 +17,10 @@ from av.container.pyio cimport pyio_close_custom_gil, pyio_close_gil
 from av.enum cimport define_enum
 from av.error cimport err_check, stash_exception
 from av.format cimport build_container_format
-from av.utils cimport avdict_to_dict
+from av.utils cimport avdict_to_dict, to_avrational, dict_to_avdict
 
 from av.dictionary import Dictionary
 from av.logging import Capture as LogCapture
-
 
 cdef object _cinit_sentinel = object()
 
@@ -306,6 +306,16 @@ cdef class Container:
         if self.ptr == NULL:
             raise AssertionError("Container is not open")
 
+    cdef void _free_chapters(self, lib.AVFormatContext *ctx) nogil:
+        cdef int i
+        if ctx.chapters != NULL:
+            for i in range(ctx.nb_chapters):
+                if ctx.chapters[i] != NULL:
+                    lib.av_freep(<void **>&ctx.chapters[i])
+            lib.av_freep(<void **>&ctx.chapters)
+        ctx.nb_chapters = 0
+
+
     def _get_flags(self):
         self._assert_open()
         return self.ptr.flags
@@ -352,6 +362,41 @@ cdef class Container:
                 "metadata": avdict_to_dict(ch.metadata, self.metadata_encoding, self.metadata_errors),
             })
         return result
+
+    def set_chapters(self, chapters):
+        self._assert_open()
+
+        cdef int count = len(chapters)
+        cdef int i
+        cdef lib.AVChapter **ch_array
+        cdef lib.AVChapter *ch
+        cdef lib.AVRational tb
+        cdef dict entry
+        cdef lib.AVDictionary *meta
+
+        with nogil:
+            self._free_chapters(self.ptr)
+
+        ch_array = <lib.AVChapter **>lib.av_malloc(count * sizeof(lib.AVChapter *))
+        if ch == NULL:
+            raise MemoryError("av_malloc failed for chapters")
+
+        for i in range(count):
+            entry = chapters[i]
+            ch = <lib.AVChapter *>lib.av_malloc(sizeof(lib.AVChapter))
+            if ch == NULL:
+                raise MemoryError("av_malloc failed for chapter")
+            ch.id = i
+            ch.start = <int64_t>entry["start"]
+            ch.end = <int64_t>entry["end"]
+            to_avrational(entry["time_base"], &ch.time_base)
+            meta = NULL
+            if "metadata" in entry:
+                dict_to_avdict(&ch.metadata, entry["metadata"], self.metadata_encoding, self.metadata_errors)
+            ch_array[i] = ch
+
+        self.ptr.nb_chapters = count
+        self.ptr.chapters = ch_array
 
 def open(
     file,
