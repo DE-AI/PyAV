@@ -45,9 +45,15 @@ cdef extern from "libavformat/avformat.h" nogil:
         AVRational avg_frame_rate
         AVRational r_frame_rate
         AVRational sample_aspect_ratio
-
         int nb_side_data
         AVPacketSideData *side_data
+
+    cdef struct AVChapter:
+        int id
+        int64_t start
+        int64_t end
+        AVRational time_base
+        AVDictionary *metadata
 
 
     # http://ffmpeg.org/doxygen/trunk/structAVIOContext.html
@@ -180,6 +186,9 @@ cdef extern from "libavformat/avformat.h" nogil:
         # Streams.
         unsigned int nb_streams
         AVStream **streams
+
+        unsigned int nb_chapters
+        AVChapter **chapters
 
         AVInputFormat *iformat
         AVOutputFormat *oformat
