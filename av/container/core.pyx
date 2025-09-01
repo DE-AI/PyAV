@@ -311,7 +311,7 @@ cdef class Container:
         if self.ptr == NULL:
             raise AssertionError("Container is not open")
 
-    cdef void _free_chapters(self, lib.AVFormatContext *ctx) nogil:
+    cdef void _free_chapters(self, lib.AVFormatContext *ctx) nogil noexcept:
         cdef int i
         if ctx.chapters != NULL:
             for i in range(ctx.nb_chapters):
@@ -377,9 +377,7 @@ cdef class Container:
         cdef int i
         cdef lib.AVChapter **ch_array
         cdef lib.AVChapter *ch
-        cdef lib.AVRational tb
         cdef dict entry
-        cdef lib.AVDictionary *meta
 
         with nogil:
             self._free_chapters(self.ptr)
