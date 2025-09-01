@@ -1,6 +1,5 @@
-from fractions import Fraction
-
 from Cython.Compiler.ExprNodes import NullNode
+
 from cython.operator cimport dereference
 from libc.stdint cimport int64_t
 
@@ -17,10 +16,16 @@ from av.container.pyio cimport pyio_close_custom_gil, pyio_close_gil
 from av.enum cimport define_enum
 from av.error cimport err_check, stash_exception
 from av.format cimport build_container_format
-from av.utils cimport avdict_to_dict, to_avrational, dict_to_avdict
+from av.utils cimport (
+    avdict_to_dict,
+    avrational_to_fraction,
+    dict_to_avdict,
+    to_avrational,
+)
 
 from av.dictionary import Dictionary
 from av.logging import Capture as LogCapture
+
 
 cdef object _cinit_sentinel = object()
 
@@ -360,7 +365,7 @@ cdef class Container:
                 "id": ch.id,
                 "start": ch.start,
                 "end": ch.end,
-                "time_base": Fraction(ch.time_base.num, ch.time_base.den),
+                "time_base": avrational_to_fraction(&ch.time_base),
                 "metadata": avdict_to_dict(ch.metadata, self.metadata_encoding, self.metadata_errors),
             })
         return result

@@ -1,4 +1,4 @@
-from typing import Any, Iterator, overload
+from typing import Any, Dict, Iterator, overload
 
 from av.audio.frame import AudioFrame
 from av.audio.stream import AudioStream
@@ -36,6 +36,8 @@ class InputContainer(Container):
     def decode(
         self, *args: Any, **kwargs: Any
     ) -> Iterator[VideoFrame | AudioFrame | SubtitleSet]: ...
+    def chapters(self) -> Iterator[Dict]: ...
+    def set_chapters(self, chapters: list[dict[str, object]]) -> None: ...
     def seek(
         self,
         offset: int,
