@@ -311,6 +311,8 @@ cdef class Container:
         if ctx.chapters != NULL:
             for i in range(ctx.nb_chapters):
                 if ctx.chapters[i] != NULL:
+                    if ctx.chapters[i].metadata != NULL:
+                        lib.av_dict_free(&ctx.chapters[i].metadata)
                     lib.av_freep(<void **>&ctx.chapters[i])
             lib.av_freep(<void **>&ctx.chapters)
         ctx.nb_chapters = 0
@@ -378,7 +380,7 @@ cdef class Container:
             self._free_chapters(self.ptr)
 
         ch_array = <lib.AVChapter **>lib.av_malloc(count * sizeof(lib.AVChapter *))
-        if ch == NULL:
+        if ch_array == NULL:
             raise MemoryError("av_malloc failed for chapters")
 
         for i in range(count):
@@ -386,11 +388,11 @@ cdef class Container:
             ch = <lib.AVChapter *>lib.av_malloc(sizeof(lib.AVChapter))
             if ch == NULL:
                 raise MemoryError("av_malloc failed for chapter")
-            ch.id = i
+            ch.id = entry["id"]
             ch.start = <int64_t>entry["start"]
             ch.end = <int64_t>entry["end"]
             to_avrational(entry["time_base"], &ch.time_base)
-            meta = NULL
+            ch.metadata = NULL
             if "metadata" in entry:
                 dict_to_avdict(&ch.metadata, entry["metadata"], self.metadata_encoding, self.metadata_errors)
             ch_array[i] = ch
