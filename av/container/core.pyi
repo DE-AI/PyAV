@@ -1,7 +1,7 @@
 from fractions import Fraction
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, Type, overload
+from typing import Any, Callable, Literal, Type, overload, TypedDict
 
 from av.enum import EnumFlag
 from av.format import ContainerFormat
@@ -11,6 +11,13 @@ from .output import OutputContainer
 from .streams import StreamContainer
 
 Real = int | float | Fraction
+
+class _Chapter(TypedDict):
+    id: int
+    start: int
+    end: int
+    time_base: Fraction | None
+    metadata: dict[str, str]
 
 class Flags(EnumFlag):
     GENPTS: int
@@ -58,8 +65,8 @@ class Container:
     def err_check(self, value: int) -> int: ...
     def set_timeout(self, timeout: Real | None) -> None: ...
     def start_timeout(self) -> None: ...
-    def chapters(self) -> list[dict]: ...
-    def set_chapters(self, chapters: list[dict[str, object]]) -> None: ...
+    def chapters(self) -> _Chapter: ...
+    def set_chapters(self, chapters: list[_Chapter]) -> None: ...
 
 @overload
 def open(
