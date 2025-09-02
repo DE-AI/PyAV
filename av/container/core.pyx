@@ -9,7 +9,7 @@ from pathlib import Path
 
 cimport libav as lib
 
-from av.container.core cimport timeout_info
+from av.container.core cimport _Chapter, timeout_info
 from av.container.input cimport InputContainer
 from av.container.output cimport OutputContainer
 from av.container.pyio cimport pyio_close_custom_gil, pyio_close_gil
@@ -369,7 +369,7 @@ cdef class Container:
             })
         return result
 
-    def set_chapters(self, chapters):
+    def set_chapters(self, chapters: list[_Chapter]):
         self._assert_open()
 
         cdef int count = len(chapters)

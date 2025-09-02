@@ -1,7 +1,7 @@
 from fractions import Fraction
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, Type, overload, TypedDict
+from typing import Any, Callable, Literal, Type, TypedDict, overload
 
 from av.enum import EnumFlag
 from av.format import ContainerFormat
@@ -12,7 +12,7 @@ from .streams import StreamContainer
 
 Real = int | float | Fraction
 
-class _Chapter(TypedDict):
+class Chapter(TypedDict):
     id: int
     start: int
     end: int
@@ -65,8 +65,8 @@ class Container:
     def err_check(self, value: int) -> int: ...
     def set_timeout(self, timeout: Real | None) -> None: ...
     def start_timeout(self) -> None: ...
-    def chapters(self) -> _Chapter: ...
-    def set_chapters(self, chapters: list[_Chapter]) -> None: ...
+    def chapters(self) -> Chapter: ...
+    def set_chapters(self, chapters: list[Chapter]) -> None: ...
 
 @overload
 def open(

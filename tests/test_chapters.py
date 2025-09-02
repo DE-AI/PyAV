@@ -42,7 +42,7 @@ def test_chapters() -> None:
 
 
 def test_set_chapters() -> None:
-    chapters = [
+    chapters: list[av.container.Chapter] = [
         {
             "id": 1,
             "start": 0,
