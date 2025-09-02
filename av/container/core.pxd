@@ -38,7 +38,6 @@ cdef class Container:
 
     # Private API.
     cdef _assert_open(self)
-    cdef void _free_chapters(self, lib.AVFormatContext *ctx) nogil noexcept
     cdef int err_check(self, int value) except -1
 
     # Timeouts

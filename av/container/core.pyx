@@ -131,6 +131,17 @@ cdef int pyav_io_close_gil(lib.AVFormatContext *s, lib.AVIOContext *pb) noexcept
 
     return result
 
+cdef void _free_chapters(lib.AVFormatContext *ctx) noexcept nogil:
+        cdef int i
+        if ctx.chapters != NULL:
+            for i in range(ctx.nb_chapters):
+                if ctx.chapters[i] != NULL:
+                    if ctx.chapters[i].metadata != NULL:
+                        lib.av_dict_free(&ctx.chapters[i].metadata)
+                    lib.av_freep(<void **>&ctx.chapters[i])
+            lib.av_freep(<void **>&ctx.chapters)
+        ctx.nb_chapters = 0
+
 Flags = define_enum("Flags", __name__, (
     ("GENPTS", lib.AVFMT_FLAG_GENPTS,
         "Generate missing pts even if it requires parsing future frames."),
@@ -311,18 +322,6 @@ cdef class Container:
         if self.ptr == NULL:
             raise AssertionError("Container is not open")
 
-    cdef void _free_chapters(self, lib.AVFormatContext *ctx) nogil noexcept:
-        cdef int i
-        if ctx.chapters != NULL:
-            for i in range(ctx.nb_chapters):
-                if ctx.chapters[i] != NULL:
-                    if ctx.chapters[i].metadata != NULL:
-                        lib.av_dict_free(&ctx.chapters[i].metadata)
-                    lib.av_freep(<void **>&ctx.chapters[i])
-            lib.av_freep(<void **>&ctx.chapters)
-        ctx.nb_chapters = 0
-
-
     def _get_flags(self):
         self._assert_open()
         return self.ptr.flags
@@ -380,7 +379,7 @@ cdef class Container:
         cdef dict entry
 
         with nogil:
-            self._free_chapters(self.ptr)
+            _free_chapters(self.ptr)
 
         ch_array = <lib.AVChapter **>lib.av_malloc(count * sizeof(lib.AVChapter *))
         if ch_array == NULL:
